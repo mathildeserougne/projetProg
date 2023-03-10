@@ -1,10 +1,12 @@
-
 class Graph:
     def __init__(self, nodes=[]):
         self.nodes = nodes
         self.graph = dict([(n, []) for n in nodes])
         self.nb_nodes = len(nodes)
         self.nb_edges = 0
+        self.arret = True #initialisation d'une variable globale au sein de la classe pour stopper les ramifications de recherche du bon chemin
+        self.chemin = None 
+
 
     def __str__(self):
         """Prints the graph as a list of neighbors for each node (one per line)"""
@@ -37,60 +39,39 @@ class Graph:
         self.graph[node2].append([node1, power_min, dist])
         self.nb_edges += 1
 
-    def get_path_with_power(self, src, dest, power):
+    #question 3.
+    #elle passe les tests mais ne marche pas :)
+    # #on cherche un moyen de stopper toutes les ramifications une fois qu'on a trouvé la solution.
+    def get_path_with_power(self, src, dest, power):    
+        dejà_vu = [False]*(self.nb_nodes+1)
+        self.arret=True
+
+        def rec(s,dejà_vu,parcourus): 
+            if self.arret : 
+                adj = self.graph[s]
+                for i in adj:
+                    if i[1] > power or dejà_vu[i[0]]:
+                        continue
+                    elif i[0] == dest:
+                        self.arret=False
+                        parcourus += [s,i[0]]                 
+                        self.chemin=parcourus 
+                    else: 
+                        if self.arret : 
+                            dejà_vu[i[0]] = True
+                            parcourus.append(s)
+                            rec(i[0],dejà_vu,parcourus)
+
+        rec(src, dejà_vu, [])
+        return self.chemin
         
 
-        def min_dist(trajets_possibles):
-            if trajets_possibles==[]:
-                return None
-            distances=[]
-            for i in range(len(trajets_possibles)):
-                s=0
-                for j in range(len(trajets_possibles[i])-1) :
-                    for k in self.graph[trajets_possibles[i][j]] :
-                        if k[0]==trajets_possibles[i][j+1] :
-                            s+=k[2] 
-                distances.append(s) #liste avec toutes les distances, indexées comme trajets_possibles, mtn on cherche l'indice de la distance la plus petite
-            indice_min=[0,distances[0]]
-            for i in range(1,len(distances)) :
-                if indice_min[1] > distances[i] :
-                    indice_min=[i,distances[i]]
-            return trajets_possibles[i]
-
-
-     
-
-        trajets_possibles=[]
-
-        def rec(start, parcourus,chemin): #to be continued
-            print(chemin)
-            for i in self.graph[start]:
-                if i[1] > power :
-                    continue #skip ceux nécessitant une trop grande puissance par rapport à notre power
-                elif parcourus[i[0]] :
-                    continue #skip ceux déjà parcourus
-                elif i[0] == dest:
-                    parcourus[start]=True
-                    chemin.append(start)
-                    chemin.append(dest)
-                    trajets_possibles.append(chemin)    
-                else:
-                    parcourus[start]=True
-                    chemin.append(start)
-                    rec(i[0], parcourus, chemin)
-
-        parcourus=[False]*self.nb_nodes
-        parcourus[src]=True
-        rec(src, parcourus, [])
-        print(trajets_possibles)
-        return min_dist(trajets_possibles)
-        
-
+#fonction de la question 2
     def connected_components(self):
         '''
         La complexité est en O(V+E) car chaques sommets et chaques arêtes sont parcourus au plus une fois
         '''
-        deja_vu = []    # liste les sommets dejà vu
+        deja_vu = [False]*self.nb_nodes    # liste les sommets dejà vu
         connected_components = []   # liste de liste des composantes connectées
 
         def parcours_graphe(q):
@@ -101,16 +82,16 @@ class Graph:
                 return
             
             s = q.pop()[0]
-            if s in deja_vu:
+            if deja_vu[s-1]:
                 parcours_graphe(q)
             else:
-                deja_vu.append(s)
+                deja_vu[s-1] = True
                 connected_components[-1].append(s)
                 q += self.graph[s]
                 parcours_graphe(q)
 
         for i in self.nodes:
-            if i in deja_vu:
+            if deja_vu[i-1]:
                 continue
             else:
                 connected_components.append([])
@@ -124,12 +105,38 @@ class Graph:
         """
         return set(map(frozenset, self.connected_components()))
 
+#question 6 (renvoie chemin ET puissance minimale)
     def min_power(self, src, dest):
         """
         Should return path, min_power.
         """
-        raise NotImplementedError
+        def récupération_puissance() : 
+            puissance=[] 
+            for i in range(self.nb_nodes) :
+                for j in self.graph[i+1] :
+                    puissance.append(j[1])
+            puissance.sort()
+            puissance=set(puissance) #retirer les doublons
+            print(puissance)
+            return puissance
+        
+        puissance=récupération_puissance()
 
+        for i in puissance : 
+            chemin=self.get_path_with_power(src, dest, i)
+            print(chemin)
+            if chemin != None : 
+                
+                return chemin, i
+        return None
+
+
+
+
+
+       
+
+        
 
 def graph_from_file(filename):
     """
@@ -161,4 +168,62 @@ def graph_from_file(filename):
                 graph.add_edge(int(ligne[0]), int(ligne[1]), int(ligne[2]))
     return graph
 
+'''
+Séance 2
+'''
 
+def kruskal(g):
+    # Créer un ensemble de tous les sommets du graphe
+    vertices = set()
+    for u in range(g.nb_nodes):
+        vertices.add(u+1)
+
+    # Trier toutes les arêtes par ordre croissant de poids
+    edges = []
+    for u in range(g.nb_nodes):
+        for v, p, w in g.graph[u+1]:
+            edges.append((w, u, v, p))
+    edges.sort()
+
+    # Créer une structure de données pour stocker l'ensemble de la forêt
+    # d'arbre couvrant de poids minimal
+    mst = Graph([i+1 for i in range(g.nb_nodes)])
+
+    # Effectuer l'algorithme de Kruskal
+    for w, u, v, p in edges:
+        if find(u) != find(v):
+            union(u, v)
+            mst.add_edge(u, v, p, w)
+
+    return mst
+
+# Fonctions auxiliaires pour l'implémentation de l'algorithme de Kruskal
+parent = {}
+rank = {}
+
+def find(u):
+    if parent[u] != u:
+        parent[u] = find(parent[u])
+    return parent[u]
+
+def union(u, v):
+    root_u = find(u)
+    root_v = find(v)
+    if root_u != root_v:
+        if rank[root_u] > rank[root_v]:
+            parent[root_v] = root_u
+        else:
+            parent[root_u] = root_v
+            if rank[root_u] == rank[root_v]:
+                rank[root_v] += 1
+
+def min_power(trajet, graph):
+    max_puissance = float('-inf') # Initialisation du maximum à une valeur très petite
+    
+    for i in range(len(trajet)-1): # Parcours du trajet
+        sommet_a, sommet_b = trajet[i], trajet[i+1]
+        for edge in graph[sommet_a]: # Parcours des arêtes adjacentes à sommet_a
+            if edge[0] == sommet_b: # Si l'arête relie sommet_a et sommet_b
+                max_puissance = max(max_puissance, edge[1]) # Mise à jour du maximum
+                
+    return max_puissance
