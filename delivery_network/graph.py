@@ -19,6 +19,9 @@ class Graph:
         return output
 
     def add_edge(self, node1, node2, power_min, dist=1):
+        #question 1 : implémentation de la méthode add_edge.
+        #description des paramètres : les "nodes" correspondent aux sommets (la ville 1 et la ville 2, par exemple).
+        #power_min donne la puissance minimale requise pour pouvoir parcourir l'arête reliant les deux sommets du graphe.
         """
         Adds an edge to the graph. Graphs are not oriented, hence an edge is added to the adjacency list of both end nodes. 
         Parameters:
@@ -39,9 +42,57 @@ class Graph:
         self.graph[node2].append([node1, power_min, dist])
         self.nb_edges += 1
 
+#QUESTION 2 : écriture de la méthode connected_components_set : elle trouve les composantes du graphe qui sont connectées entre elles.
+
+    def connected_components(self): #étape intermédiaire : seulement le procédé pour UN sommet, puis méthode complète qui parcourt tout le graphe
+        '''
+        La complexité est en O(V+E) car chaques sommets et chaques arêtes sont parcourus au plus une fois
+        '''
+        deja_vu = [False]*self.nb_nodes    # liste les sommets dejà vu
+        connected_components = []   # liste de liste des composantes connectées
+
+        def parcours_graphe(q):
+            '''
+            Cette fonction procède récursivement, en parcourant chaque composante connectée du graphe. 
+            On garde en tête que cette méthode récursive est surtout efficace pour de petits graphes (sinon, la procédure est trop lourde).
+            '''
+            if q==[] :
+                return
+            
+            s = q.pop()[0] #on fait une alternative par rapport au fait d'avoir déjà vu un noeud ou pas encore.
+            if deja_vu[s-1]:
+                parcours_graphe(q)
+            else:
+                deja_vu[s-1] = True
+                connected_components[-1].append(s)
+                q += self.graph[s]
+                parcours_graphe(q)
+
+        for i in self.nodes: #boucle parcourant les noeuds du graphe
+            if deja_vu[i-1]:
+                continue #on ignore si on l'a déjà traité
+            else:
+                connected_components.append([])
+                parcours_graphe(self.graph[i])
+        return connected_components 
+
+    """
+    La méthode connected_components() passe par un procédé unitaire : regarder les points connectés à un sommet en particulier.
+    On implémente ce procédé récursivement pour évaluer ces connexions pour tous les points du graphe.
+    Ainsi, l'output de notre méthode correspond à une liste de listes : pour chaque sommet on obtient la liste de tous les sommets auquels il est connecté.
+    """
+
+    def connected_components_set(self): 
+        """
+        The result should be a set of frozensets (one per component), 
+        For instance, for network01.in: {frozenset({1, 2, 3}), frozenset({4, 5, 6, 7})}
+        """
+        return set(map(frozenset, self.connected_components()))
+    
+
     #question 3.
-    #elle passe les tests mais ne marche pas :)
-    # #on cherche un moyen de stopper toutes les ramifications une fois qu'on a trouvé la solution.
+    #pour l'instant elle passe les tests de la question 3 mais ne fonctionne pas pour d'autres essais (notamment à partir de la 6) 
+    #on cherche un moyen de stopper toutes les ramifications une fois qu'on a trouvé la solution.
     def get_path_with_power(self, src, dest, power):    
         dejà_vu = [False]*(self.nb_nodes+1)
         self.arret=True
@@ -65,79 +116,7 @@ class Graph:
         rec(src, dejà_vu, [])
         return self.chemin
         
-
-#fonction de la question 2
-    def connected_components(self):
-        '''
-        La complexité est en O(V+E) car chaques sommets et chaques arêtes sont parcourus au plus une fois
-        '''
-        deja_vu = [False]*self.nb_nodes    # liste les sommets dejà vu
-        connected_components = []   # liste de liste des composantes connectées
-
-        def parcours_graphe(q):
-            '''
-            fonction récursive qui parcours une composante connectée du graphe
-            '''
-            if q==[] :
-                return
-            
-            s = q.pop()[0]
-            if deja_vu[s-1]:
-                parcours_graphe(q)
-            else:
-                deja_vu[s-1] = True
-                connected_components[-1].append(s)
-                q += self.graph[s]
-                parcours_graphe(q)
-
-        for i in self.nodes:
-            if deja_vu[i-1]:
-                continue
-            else:
-                connected_components.append([])
-                parcours_graphe(self.graph[i])
-        return connected_components
-
-    def connected_components_set(self):
-        """
-        The result should be a set of frozensets (one per component), 
-        For instance, for network01.in: {frozenset({1, 2, 3}), frozenset({4, 5, 6, 7})}
-        """
-        return set(map(frozenset, self.connected_components()))
-
-#question 6 (renvoie chemin ET puissance minimale)
-    def min_power(self, src, dest):
-        """
-        Should return path, min_power.
-        """
-        def récupération_puissance() : 
-            puissance=[] 
-            for i in range(self.nb_nodes) :
-                for j in self.graph[i+1] :
-                    puissance.append(j[1])
-            puissance.sort()
-            puissance=set(puissance) #retirer les doublons
-            print(puissance)
-            return puissance
-        
-        puissance=récupération_puissance()
-
-        for i in puissance : 
-            chemin=self.get_path_with_power(src, dest, i)
-            print(chemin)
-            if chemin != None : 
-                
-                return chemin, i
-        return None
-
-
-
-
-
-       
-
-        
-
+#QUESTION 4 : modification de la fonction graph_from_file. lecture de la distance d'une arête qui est optionnelle.
 def graph_from_file(filename):
     """
     Reads a text file and returns the graph as an object of the Graph class.
@@ -167,6 +146,42 @@ def graph_from_file(filename):
             else:
                 graph.add_edge(int(ligne[0]), int(ligne[1]), int(ligne[2]))
     return graph
+
+
+#question 6 (renvoie chemin ET puissance minimale)
+    def min_power(self, src, dest):
+        """
+        Should return path, min_power.
+        """
+        def récupération_puissance() : 
+            puissance=[] 
+            for i in range(self.nb_nodes) :
+                for j in self.graph[i+1] :
+                    puissance.append(j[1])
+            puissance.sort()
+            puissance=set(puissance) #retirer les doublons
+            print(puissance)
+            return puissance
+        
+        puissance=récupération_puissance()
+
+        for i in puissance : 
+            chemin=self.get_path_with_power(src, dest, i)
+            print(chemin)
+            if chemin != None : 
+                
+                return chemin, i 
+        return None
+        """
+        On a un trajet donné, on veut le chemin et la puissance nécessaire pour le parcourir.
+        L'output de la fonction est un couple de valeurs : le chemin (donc liste des sommets par lesquels on passe), et la puissance requise pour effectuer cela.
+        """
+
+
+
+
+
+
 
 '''
 Séance 2
