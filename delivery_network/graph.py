@@ -201,6 +201,13 @@ def kruskal(g):
     est inférieur à tout autre arbre couvrant du graphe.
     """
     
+    """
+    procédure union-find
+    Union-find is a data structure that maintains disjoint set (called connected components or components in short) membership,
+    and makes it easier to merge (union) two components, and to find if two elements are connected (i.e., belong to the same component).
+    This implements the "weighted-quick-union-with-path-compression" union-find algorithm. Only works if elements are immutable objects. 
+    """
+    
     # Créer un ensemble de tous les sommets du graphe
     vertices = set()
     for u in range(g.nb_nodes):
