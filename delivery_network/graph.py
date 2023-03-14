@@ -186,8 +186,14 @@ def graph_from_file(filename):
 '''
 Séance 2
 '''
-
+#QUESTION 12 : écriture d'une fonction kruskal()
+"""
+Cette fonction prend en input un graphe (sommets, segments avec puissance minimale pour les parcourir) qui est enregistré selon les critères de la classe Graph.
+L'output de la fonction est un autre élément de la classe Graph, qui est un arbre.
+"""
 def kruskal(g):
+    #on implémente l'algorithme de kruskal, qui classe les arêtes dans l'ordre croissant tant que la nouvelle arête ne nous fait pas tourner en rond (éviter les cycles)
+
     # Créer un ensemble de tous les sommets du graphe
     vertices = set()
     for u in range(g.nb_nodes):
@@ -198,10 +204,9 @@ def kruskal(g):
     for u in range(g.nb_nodes):
         for v, p, w in g.graph[u+1]:
             edges.append((w, u, v, p))
-    edges.sort()
+    edges.sort() #fonction sort pour obtenir directement un ensemble classé d'éléments
 
-    # Créer une structure de données pour stocker l'ensemble de la forêt
-    # d'arbre couvrant de poids minimal
+    # Créer une structure de données (mst) pour stocker l'ensemble de la forêt d'arbres couvrant de poids minimal
     mst = Graph([i+1 for i in range(g.nb_nodes)])
 
     # Effectuer l'algorithme de Kruskal
