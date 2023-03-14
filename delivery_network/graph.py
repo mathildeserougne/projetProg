@@ -194,6 +194,13 @@ L'output de la fonction est un autre élément de la classe Graph, qui est un ar
 def kruskal(g):
     #on implémente l'algorithme de kruskal, qui classe les arêtes dans l'ordre croissant tant que la nouvelle arête ne nous fait pas tourner en rond (éviter les cycles)
 
+    """explication sur la structure d'"arbre"
+    L'arbre est un outil pour travailler sur un graphe non orienté et pondéré.
+    Un arbre couvrant compte tous les sommets du graphe, et ne fait pas de cycle.
+    La recherche d'un arbre couvrant minimum, c'est la recherche d'un arbre dont le poids (=le poids des arêtes qui servent de branches à l'arbre)
+    est inférieur à tout autre arbre couvrant du graphe.
+    """
+    
     # Créer un ensemble de tous les sommets du graphe
     vertices = set()
     for u in range(g.nb_nodes):
@@ -204,10 +211,11 @@ def kruskal(g):
     for u in range(g.nb_nodes):
         for v, p, w in g.graph[u+1]:
             edges.append((w, u, v, p))
-    edges.sort() #fonction sort pour obtenir directement un ensemble classé d'éléments
+    edges.sort() #fonction sort() pour obtenir directement un ensemble classé d'éléments
 
     # Créer une structure de données (mst) pour stocker l'ensemble de la forêt d'arbres couvrant de poids minimal
     mst = Graph([i+1 for i in range(g.nb_nodes)])
+    
 
     # Effectuer l'algorithme de Kruskal
     for w, u, v, p in edges:
