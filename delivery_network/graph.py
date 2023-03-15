@@ -91,31 +91,84 @@ class Graph:
     
 
     #question 3.
-    #pour l'instant elle passe les tests de la question 3 mais ne fonctionne pas pour d'autres essais (notamment à partir de la 6) 
-    #on cherche un moyen de stopper toutes les ramifications une fois qu'on a trouvé la solution.
     def get_path_with_power(self, src, dest, power):    
-        dejà_vu = [False]*(self.nb_nodes+1)
-        self.arret=True
+        # Initialisation de la table de distance à l'infini pour tous les noeuds
+        distances = {node: float('inf') for node in self.graph}
+        # La distance du noeud de départ à lui-même est de 0
+        distances[src] = 0
+    
+        # Initialisation de la file de priorité avec le noeud de départ
+        pq = [(0, src)]
+        # Initialisation de la table des parents pour chaque noeud
+        parents = {src: None}
+    
+        while pq:
+            # Récupération du noeud avec la plus petite distance à partir du début
+            (current_distance, current_node) = heapq.heappop(pq)
+    
+            # Si nous avons atteint la fin, nous avons trouvé le plus court chemin
+            if current_node == dest:
+                # Construction de la liste des noeuds parcourus
+                path = []
+                while current_node is not None:
+                    path.append(current_node)
+                    current_node = parents[current_node]
+                path.reverse()
+                return path
+    
+            # Pour chaque noeud voisin du noeud actuel
+            for neighbor, p, weight in self.graph[current_node]:
+                if p > power:
+                    # Elimination des chemins demandant une trop grande puissance
+                    continue
+            
+                # Calcul de la distance de ce noeud voisin par rapport au début
+                distance = current_distance + weight
+    
+                # Si nous avons trouvé une distance plus courte vers ce voisin, l'ajouter à la file de priorité
+                if distance < distances[neighbor]:
+                    distances[neighbor] = distance
+                    heapq.heappush(pq, (distance, neighbor))
+                    # Enregistrement du parent de ce voisin
+                    parents[neighbor] = current_node
 
-        def rec(s,dejà_vu,parcourus): 
-            if self.arret : 
-                adj = self.graph[s]
-                for i in adj:
-                    if i[1] > power or dejà_vu[i[0]]:
-                        continue
-                    elif i[0] == dest:
-                        self.arret=False
-                        parcourus += [s,i[0]]                 
-                        self.chemin=parcourus 
-                    else: 
-                        if self.arret : 
-                            dejà_vu[i[0]] = True
-                            parcourus.append(s)
-                            rec(i[0],dejà_vu,parcourus)
-
-        rec(src, dejà_vu, [])
-        return self.chemin
+        # Si nous avons parcouru tous les noeuds et n'avons pas atteint la fin, aucun chemin n'existe
+        return None
         
+
+#question 6 (renvoie chemin ET puissance minimale)
+    def min_power(self, src, dest):
+        """
+        Should return path, min_power.
+        """
+        def suppression_doucblon(liste):
+            liste_sans_doublon = []
+            for elem in liste:
+                if elem not in liste_sans_doublon:
+                    liste_sans_doublon.append(elem)
+            return liste_sans_doublon
+        def récupération_puissance() : 
+            puissance=[] 
+            for i in range(self.nb_nodes) :
+                for j in self.graph[i+1] :
+                    puissance.append(j[1])
+            puissance = suppression_doucblon(puissance)
+            puissance.sort()
+            return puissance
+        
+        puissance=récupération_puissance()
+
+        for i in puissance : 
+            chemin=self.get_path_with_power(src, dest, i)
+            if chemin != None : 
+                
+                return chemin, i 
+        return None
+        """
+        On a un trajet donné, on veut le chemin et la puissance nécessaire pour le parcourir.
+        L'output de la fonction est un couple de valeurs : le chemin (donc liste des sommets par lesquels on passe), et la puissance requise pour effectuer cela.
+        """
+
 #QUESTION 4 : modification de la fonction graph_from_file. lecture de la distance d'une arête qui est optionnelle.
 def graph_from_file(filename):
     """
@@ -136,9 +189,11 @@ def graph_from_file(filename):
         An object of the class Graph with the graph from file_name.
     """
     files = open(filename, "r")
+    i = True
     for ligne in files:
         ligne = ligne.split(" ")
-        if len(ligne) == 2:
+        if i:
+            i = False
             graph = Graph([i+1 for i in range(int(ligne[0]))])
         else:
             if len(ligne) == 4:
@@ -146,36 +201,6 @@ def graph_from_file(filename):
             else:
                 graph.add_edge(int(ligne[0]), int(ligne[1]), int(ligne[2]))
     return graph
-
-
-#question 6 (renvoie chemin ET puissance minimale)
-    def min_power(self, src, dest):
-        """
-        Should return path, min_power.
-        """
-        def récupération_puissance() : 
-            puissance=[] 
-            for i in range(self.nb_nodes) :
-                for j in self.graph[i+1] :
-                    puissance.append(j[1])
-            puissance.sort()
-            puissance=set(puissance) #retirer les doublons
-            print(puissance)
-            return puissance
-        
-        puissance=récupération_puissance()
-
-        for i in puissance : 
-            chemin=self.get_path_with_power(src, dest, i)
-            print(chemin)
-            if chemin != None : 
-                
-                return chemin, i 
-        return None
-        """
-        On a un trajet donné, on veut le chemin et la puissance nécessaire pour le parcourir.
-        L'output de la fonction est un couple de valeurs : le chemin (donc liste des sommets par lesquels on passe), et la puissance requise pour effectuer cela.
-        """
 
 
 
@@ -188,77 +213,98 @@ Séance 2
 '''
 #QUESTION 12 : écriture d'une fonction kruskal()
 """
+La classe UnionFind est une structure de données grâce à laquelle on représente une partition d'un ensemble fini.
+Dans notre structure en arbre, chaque élément (sommet) est la racine (root) d'un arbre.
+Find premet de parcourir l'arbre pour rejoindre cette racine.
+
+find va utiliser un point d'une catégorie, choisi comme representative (par ex pour dire à quelle catégorie appartient tel sommet)
+ainsi deux éléments appartiennent au même groupe si et seulement si ils ont le même representative
+pour plus de clarté on peut mettre le representative comme racine de l'arbre (notre catégorie) -> d'où l'apparition de la notion de parents
+on remonte alors l'arbre en allant vers la racine, en passant de parent en parent
+cette remontée s'arrête bien, parce que le parent du representative = lui-même et on dit au programme de se stopper quand le parent d'un sommet = lui-même
+
+union permet de réunir deux ensembles disjoints
+avec nos graphes, on veut unir deux arbres, donc on peut poser le representative du premier arbre comme le parent du representative de l'autre arbre.
+"""
+class UnionFind:
+    def __init__(self, nodes):
+        self.parent = {node: node for node in nodes}
+        self.rank = {node: 0 for node in nodes}
+
+    def find(self, node):
+        if self.parent[node] != node:
+            self.parent[node] = self.find(self.parent[node])
+        return self.parent[node]
+
+    def union(self, node1, node2):
+        """
+        union permet de réunir deux ensembles disjoints
+        le principe est de regrouper des ensembles qui ont la même structure selon un certain critère
+        
+        """
+        root1 = self.find(node1)
+        root2 = self.find(node2)
+
+        if root1 == root2: #dans ce cas on a déjà les mêmes racines, donc les deux noeuds sont déjà dans le même arbre, rien à faire
+            return
+        
+        #on fait de l'une des racines l'enfant de l'autre racine : les deux arbres sont unis
+        if self.rank[root1] > self.rank[root2]:
+            self.parent[root2] = root1
+        else:
+            self.parent[root1] = root2
+            if self.rank[root1] == self.rank[root2]:
+                self.rank[root2] += 1 
+"""
 Cette fonction prend en input un graphe (sommets, segments avec puissance minimale pour les parcourir) qui est enregistré selon les critères de la classe Graph.
 L'output de la fonction est un autre élément de la classe Graph, qui est un arbre.
 """
+
 def kruskal(g):
-    #on implémente l'algorithme de kruskal, qui classe les arêtes dans l'ordre croissant tant que la nouvelle arête ne nous fait pas tourner en rond (éviter les cycles)
-
-    """explication sur la structure d'"arbre"
-    L'arbre est un outil pour travailler sur un graphe non orienté et pondéré.
-    Un arbre couvrant compte tous les sommets du graphe, et ne fait pas de cycle.
-    La recherche d'un arbre couvrant minimum, c'est la recherche d'un arbre dont le poids (=le poids des arêtes qui servent de branches à l'arbre)
-    est inférieur à tout autre arbre couvrant du graphe.
-    """
-    
-    """
-    procédure union-find
-    Union-find is a data structure that maintains disjoint set (called connected components or components in short) membership,
-    and makes it easier to merge (union) two components, and to find if two elements are connected (i.e., belong to the same component).
-    This implements the "weighted-quick-union-with-path-compression" union-find algorithm. Only works if elements are immutable objects. 
-    """
-    
-    # Créer un ensemble de tous les sommets du graphe
-    vertices = set()
-    for u in range(g.nb_nodes):
-        vertices.add(u+1)
-
-    # Trier toutes les arêtes par ordre croissant de poids
+    # Création de la liste des arêtes
     edges = []
-    for u in range(g.nb_nodes):
-        for v, p, w in g.graph[u+1]:
-            edges.append((w, u, v, p))
-    edges.sort() #fonction sort() pour obtenir directement un ensemble classé d'éléments
+    for node in g.graph:
+        for neighbor, power, dist in g.graph[node]:
+            edges.append((dist, node, neighbor, power))
 
-    # Créer une structure de données (mst) pour stocker l'ensemble de la forêt d'arbres couvrant de poids minimal
-    mst = Graph([i+1 for i in range(g.nb_nodes)])
-    
+    # Tri de la liste des arêtes par poids croissant
+    edges.sort()
 
-    # Effectuer l'algorithme de Kruskal
-    for w, u, v, p in edges:
-        if find(u) != find(v):
-            union(u, v)
-            mst.add_edge(u, v, p, w)
+    # Initialisation de la structure Union-Find
+    nodes = set(g.graph.keys())
+    uf = UnionFind(nodes)
 
-    return mst
+    # Initialisation de la liste des arêtes de l'arbre de couverture minimale
+    mst_edges = Graph([i for i in g.graph])
 
-# Fonctions auxiliaires pour l'implémentation de l'algorithme de Kruskal
-parent = {}
-rank = {}
+    # Parcours de toutes les arêtes triées par ordre croissant de poids
+    for dist, start, end, power in edges:
+        # Si les sommets de l'arête appartiennent à des ensembles disjoints différents
+        if uf.find(start) != uf.find(end):
+            # Ajout de l'arête à l'arbre de couverture minimale
+            mst_edges.add_edge(start, end, power)
+            # Fusion des ensembles disjoints des sommets de l'arête
+            uf.union(start, end)
 
-def find(u):
-    if parent[u] != u:
-        parent[u] = find(parent[u])
-    return parent[u]
+    return mst_edges
 
-def union(u, v):
-    root_u = find(u)
-    root_v = find(v)
-    if root_u != root_v:
-        if rank[root_u] > rank[root_v]:
-            parent[root_v] = root_u
-        else:
-            parent[root_u] = root_v
-            if rank[root_u] == rank[root_v]:
-                rank[root_v] += 1
-
-def min_power(trajet, graph):
+def min_power(trajet, g):
+    g = kruskal(g)
     max_puissance = float('-inf') # Initialisation du maximum à une valeur très petite
     
     for i in range(len(trajet)-1): # Parcours du trajet
         sommet_a, sommet_b = trajet[i], trajet[i+1]
-        for edge in graph[sommet_a]: # Parcours des arêtes adjacentes à sommet_a
+        for edge in g.graph[sommet_a]: # Parcours des arêtes adjacentes à sommet_a
             if edge[0] == sommet_b: # Si l'arête relie sommet_a et sommet_b
                 max_puissance = max(max_puissance, edge[1]) # Mise à jour du maximum
                 
     return max_puissance
+
+"""
+Question 15:
+    
+min_power :
+    appelle kruskal qui a une complexité de O(Elog(E)) avec E le nombre d'arrête
+    parcours en O(V^2) l'arbre de couverture minimal avec V le nombre de sommets
+la complexité est donc en O(Elog(E)+V¨2)
+
