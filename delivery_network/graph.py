@@ -70,7 +70,7 @@ class Graph:
 
         for i in self.nodes: #boucle parcourant les noeuds du graphe
             if deja_vu[i-1]:
-                continue #on ignore si on l'a déjà traité
+                continue #on ignore, si on l'a déjà traité
             else:
                 connected_components.append([])
                 parcours_graphe(self.graph[i])
@@ -240,7 +240,6 @@ class UnionFind:
         """
         union permet de réunir deux ensembles disjoints
         le principe est de regrouper des ensembles qui ont la même structure selon un certain critère
-        
         """
         root1 = self.find(node1)
         root2 = self.find(node2)
@@ -307,4 +306,4 @@ min_power :
     appelle kruskal qui a une complexité de O(Elog(E)) avec E le nombre d'arrête
     parcours en O(V^2) l'arbre de couverture minimal avec V le nombre de sommets
 la complexité est donc en O(Elog(E)+V¨2)
-
+""" 
