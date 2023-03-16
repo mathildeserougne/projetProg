@@ -4,8 +4,8 @@ class Graph:
         self.graph = dict([(n, []) for n in nodes])
         self.nb_nodes = len(nodes)
         self.nb_edges = 0
-        self.arret = True #initialisation d'une variable globale au sein de la classe pour stopper les ramifications de recherche du bon chemin
-        self.chemin = None 
+        self.mst = None 
+        self.parent_mst = None
 
 
     def __str__(self):
@@ -167,7 +167,61 @@ class Graph:
         """
         On a un trajet donné, on veut le chemin et la puissance nécessaire pour le parcourir.
         L'output de la fonction est un couple de valeurs : le chemin (donc liste des sommets par lesquels on passe), et la puissance requise pour effectuer cela.
-        """
+
+          """
+#encore en construction
+#fonction min_power de la séance 2 : min_power avec les arbres de kruskal
+    def min_power_k(self,src,dest):
+        if self.mst == None :
+            self.mst=kruskal(self) 
+            deja_vu = [False]*(self.nb_nodes + 1)
+            parent = {1 : (1,0,0)}
+            pq = [1]
+            while pq:
+                sommet1 = pq.pop(0)
+                if deja_vu[sommet1]:
+                    continue
+                else:
+                    deja_vu[sommet1] = True    
+                    for sommet2, puissance, distance in self.graph[sommet1]:
+                        if deja_vu[sommet2] :
+                            continue
+                        pq.append(sommet2)
+                        parent[sommet2] = (sommet1, puissance,parent[sommet1][2]+1)
+            self.parent_mst=parent
+        chemin = [[],0]
+        L = []
+        if self.parent_mst[dest][2] > self.parent_mst[src][2]:
+            fin = True
+            n = self.parent_mst[dest][2]-self.parent_mst[src][2]
+            for i in range(n):
+                L.append(dest)
+                chemin[1] = max(self.parent_mst[dest][1], chemin[1])
+                dest = self.parent_mst[dest][0]
+                L.reverse()
+        else:
+            fin = False
+            n = self.parent_mst[src][2]-self.parent_mst[dest][2]
+            for i in range(n):
+                L.append(src)
+                chemin[1] = max(self.parent_mst[src][1],chemin[1])
+                src = self.parent_mst[src][0]
+        chemin_src, chemin_dest = [],[]
+        while self.parent_mst[src][0] != self.parent_mst[dest][0]:
+            parent_src, puissance_src, _ = self.parent_mst[src]
+            parent_dest, puissance_dest, _ = self.parent_mst[src]
+            chemin_src.append(parent_src)
+            chemin_dest.append(parent_dest)
+            chemin[1] = max(puissance_src, puissance_dest, chemin[1])
+            src,dest = parent_src,parent_dest
+        chemin_dest.reverse()
+        if fin:
+            chemin[0] = chemin_src + [self.parent_mst[src][0]] + chemin_dest + L
+        else:
+            chemin[0] = L + chemin_src + [self.parent_mst[src][0]] + chemin_dest
+        print(chemin)
+        print(self.parent_mst)
+        return chemin
 
 #QUESTION 4 : modification de la fonction graph_from_file. lecture de la distance d'une arête qui est optionnelle.
 def graph_from_file(filename):
@@ -286,35 +340,6 @@ def kruskal(g):
             uf.union(start, end)
 
     return mst_edges
-
-def min_power(g,trajet):
-    g = kruskal(g)
-    deja_vu = [False]*(g.nb_nodes + 1)
-    src , dest = trajet
-    parent = {dest : (dest,0)}
-    pq = [src]
-    stop = False
-    while pq:
-        sommet1 = pq.pop(0)
-        if stop:
-            break
-        elif deja_vu[sommet1]:
-            continue
-        else:
-            deja_vu[sommet1] = True
-            if sommet1 == dest:
-                stop = True
-            for sommet2, puissance, distance in g.graph[sommet1]:
-                pq.append(sommet2)
-                parent[sommet2] = (sommet1, puissance)
-    chemin = [[src],0]
-    while dest != src:
-        src, puissance = parent[dest]
-        chemin[0].append(src)
-        chemin[1] = max(puissance,chemin[1])
-    return chemin
-
-    
 
 
 
