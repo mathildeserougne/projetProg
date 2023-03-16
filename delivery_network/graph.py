@@ -264,7 +264,7 @@ def kruskal(g):
     edges = []
     for node in g.graph:
         for neighbor, power, dist in g.graph[node]:
-            edges.append((dist, node, neighbor, power))
+            edges.append((power, node, neighbor, dist))
 
     # Tri de la liste des arêtes par poids croissant
     edges.sort()
@@ -277,7 +277,7 @@ def kruskal(g):
     mst_edges = Graph([i for i in g.graph])
 
     # Parcours de toutes les arêtes triées par ordre croissant de poids
-    for dist, start, end, power in edges:
+    for power, start, end, dist in edges:
         # Si les sommets de l'arête appartiennent à des ensembles disjoints différents
         if uf.find(start) != uf.find(end):
             # Ajout de l'arête à l'arbre de couverture minimale
@@ -287,17 +287,36 @@ def kruskal(g):
 
     return mst_edges
 
-def min_power(trajet, g):
+def min_power(g,trajet):
     g = kruskal(g)
-    max_puissance = float('-inf') # Initialisation du maximum à une valeur très petite
+    deja_vu = [False]*(g.nb_nodes + 1)
+    src , dest = trajet
+    parent = {dest : (dest,0)}
+    pq = [src]
+    stop = False
+    while pq:
+        sommet1 = pq.pop(0)
+        if stop:
+            break
+        elif deja_vu[sommet1]:
+            continue
+        else:
+            deja_vu[sommet1] = True
+            if sommet1 == dest:
+                stop = True
+            for sommet2, puissance, distance in g.graph[sommet1]:
+                pq.append(sommet2)
+                parent[sommet2] = (sommet1, puissance)
+    chemin = [[src],0]
+    while dest != src:
+        src, puissance = parent[dest]
+        chemin[0].append(src)
+        chemin[1] = max(puissance,chemin[1])
+    return chemin
+
     
-    for i in range(len(trajet)-1): # Parcours du trajet
-        sommet_a, sommet_b = trajet[i], trajet[i+1]
-        for edge in g.graph[sommet_a]: # Parcours des arêtes adjacentes à sommet_a
-            if edge[0] == sommet_b: # Si l'arête relie sommet_a et sommet_b
-                max_puissance = max(max_puissance, edge[1]) # Mise à jour du maximum
-                
-    return max_puissance
+
+
 
 """
 Question 15:
@@ -307,3 +326,46 @@ min_power :
     parcours en O(V^2) l'arbre de couverture minimal avec V le nombre de sommets
 la complexité est donc en O(Elog(E)+V¨2)
 """ 
+
+
+#SEANCE 4 : CATALOGUES ET AFFECTATIONS DE CAMIONS
+#catalogues téléchargés dans les fichiers trucks.0.in, trucks.1.in, trucks.2.in dans input
+
+#Question 18 : programme qui retourne une collection de camions à achteer et leurs affectations sur des trajets
+""" méthodes suggérées :
+approche type force brute =  tester toutes les solutions possibles
+
+analogie avec pbm du sac à dos = problème d'optimisation combinatoire.
+trouver la combinaison d'éléments la plus précieuse à inclure dans un sac à dos, étant donné un ensemble d'éléments décrits par leurs poids et valeurs.
+L'objectif du problème = sélectionner les objets à mettre dans le sac de façon à maximiser la valeur de ts les objets pris,  sous contrainte du poids supporté par le sac.
+
+mais ces méthodes sont assez lourdes -> regarder des méthodes plus rapides pour traiter tous les fichiers d'entrée.
+"""
+
+class Camion:
+    def __init__(self, puissance, prix):
+        self.puissance = puissance
+        self.prix = prix
+
+    
+def truck_from_file(filename):
+    liste_camion = []
+    file = open(filename,"r")
+    i = True
+    for ligne in file:
+        if i:
+            i = False
+            continue
+        else:
+            ligne = ligne.split(" ")
+            camion = Camion(int(ligne[0]),int(ligne[1]))
+            liste_camion.append(camion)
+    return liste_camion
+
+
+""" IDEES
+voir si le budget global permet de couvrir tous les trajets
+ensuite, méthode naïve : prendre tous les trajets possibles et traiter tous les cas
+plus poussé : passer par le problème du sac à dos. valeur du trajet mais aussi coût (comme le poids)
+si même puissance entre deux camions mais différence de prix on supprime du fichier le plus cher
+"""
