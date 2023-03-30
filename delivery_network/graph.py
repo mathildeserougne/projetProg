@@ -356,7 +356,7 @@ la complexité est donc en O(Elog(E)+V¨2)
 #SEANCE 4 : CATALOGUES ET AFFECTATIONS DE CAMIONS
 #catalogues téléchargés dans les fichiers trucks.0.in, trucks.1.in, trucks.2.in dans input
 
-#Question 18 : programme qui retourne une collection de camions à achteer et leurs affectations sur des trajets
+#Question 18 : programme qui retourne une collection de camions à acheter et leurs affectations sur des trajets
 """ méthodes suggérées :
 approche type force brute =  tester toutes les solutions possibles
 
@@ -367,14 +367,14 @@ L'objectif du problème = sélectionner les objets à mettre dans le sac de faç
 mais ces méthodes sont assez lourdes -> regarder des méthodes plus rapides pour traiter tous les fichiers d'entrée.
 """
 
-class Camion:
+class Camion: #enregistre le format des données concernant les camions, tq dans le catalogue
     def __init__(self, puissance, prix):
         self.puissance = puissance
         self.prix = prix
 
     
-def truck_from_file(filename):
-    liste_camion = []
+def truck_from_file(filename): #fonction qui s'applique aux fichiers de type trucks dans le dossier input du github
+    liste_camion = []   #initialisation d'une liste vide de camions
     file = open(filename,"r")
     i = True
     for ligne in file:
@@ -383,9 +383,9 @@ def truck_from_file(filename):
             continue
         else:
             ligne = ligne.split(" ")
-            camion = Camion(int(ligne[0]),int(ligne[1]))
-            liste_camion.append(camion)
-    return liste_camion
+            camion = Camion(int(ligne[0]),int(ligne[1])) #modéliser chaque camion comme un couple de nombres (transtypage de ce qu'on lit dans le catalogue)
+            liste_camion.append(camion)     #ajoute ce camion à la liste initialisée au début de la fonction
+    return liste_camion     #retourne une liste de camions avec camion=(puissance,prix)
 
 
 """ IDEES
@@ -393,4 +393,54 @@ voir si le budget global permet de couvrir tous les trajets
 ensuite, méthode naïve : prendre tous les trajets possibles et traiter tous les cas
 plus poussé : passer par le problème du sac à dos. valeur du trajet mais aussi coût (comme le poids)
 si même puissance entre deux camions mais différence de prix on supprime du fichier le plus cher
+"""
+
+"""30 mars 2023 processing du catalogue de camions pour arriver à modéliser l'optimisation comme un problème du sac à dos
+"""
+
+#pre-processing du catalogue trucks, pour enlever les binômes
+def catalogue_optimise(filename) : #fonction qui s'applique à un catalogue trucks.in
+    liste_optimale=[] #initialisation (celle que l'on veut garder à la fin)
+    liste_complete=[] #initialisation de la liste brute de camions
+
+    file = open(filename, "r") #création de la liste NON optimisée
+    for ligne in file : 
+        ligne=ligne.split(" ")
+        camion=Camion(int(ligne[0]), int(ligne[1]))
+        liste_complete.append(camion)
+    return liste_complete #comme ça on a une liste de vecteurs camion=(puissance, coût)
+
+    #création de la liste OPTIMISEE
+    lignes=file.readlines() #on lit toutes les lignes car on veut trouver tous les doublons
+
+    for ligne in lignes : 
+        if : #cas où la puissance sur cette ligne n'a pas (encore) de doublon
+            liste_optimale.append(ligne) #si pas de doublon, on l'ajoute
+        else : #si elle a un ou des doublons, on compare les prix et on remplace les plus chères par celle-là
+    #ensuite, on refait la même boucle mais en comparant les prix (un cas sans doublon, un cas où on supprime le plus faible)
+    for ligne in lignes : 
+        if : #cas où le prix de cette ligne n'a pas (encore) de doublon -> elle est déjà ok sur puissance, elle est ok sur prix, donc on la garde
+        else : #elle a des doublons sur le pov du prix, donc on classe selon puissance pour garder la plus puissante
+
+    return liste_optimisée #on récupère une liste sans doublons : pour un prix, on a gardé le camion le plus puissant, pour une puissance, le moins cher
+
+
+
+"""ETAPE 1) si on a deux camions qui ont le même prix mais n'ont pas la même puissance, on supprime le plus faible
+si on a deux camions qui ont la même puissance mais pas le même prix, on supprime le plus cher
+ainsi, on obtient une liste optimisée des camions (avec seulement les meilleurs de chaque doublon)
+"""
+
+"""ETAPE 2) autre chose à faire : arriver à décrire chaque trajet (pour l'instant modélisé comme (ville-départ, ville-destination, profit)) comme (coût, profit)
+parce que par dest_min_power on peut trouver la puissance minimale nécessaire pour couvrir le trajet 
+donc on a une puissance minimale, que l'on peut couvrir pour un coût C grâce aux camions de notre liste optimisée
+ainsi on arrivera à trajet=(coût, profit)"""
+
+"""ENFIN on peut résoudre notre problème comme un pbm du sac à dos
+-> contrainte : le budget de l'entreprise
+-> fonction objectif : le profit (somme des profits de chaque trajet), que l'on veut maximiser
+
+deux manière de résoudre : 
+-> les solutions exactes : force brute, ou programme dynamique, mais assez lourd à réaliser.
+-> approximations : par exemple ordonner par valeur décroissante les trajets, et les additionner tant que cela respecte la contrainte.
 """
