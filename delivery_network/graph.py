@@ -46,7 +46,7 @@ class Graph:
 
     def connected_components(self): #étape intermédiaire : seulement le procédé pour UN sommet, puis méthode complète qui parcourt tout le graphe
         '''
-        La complexité est en O(V+E) car chaques sommets et chaques arêtes sont parcourus au plus une fois
+        La complexité est en O(V+E) car chaque sommet et chaque arête sont parcourus au plus une fois
         '''
         deja_vu = [False]*self.nb_nodes    # liste les sommets dejà vu
         connected_components = []   # liste de liste des composantes connectées
@@ -169,7 +169,7 @@ class Graph:
         L'output de la fonction est un couple de valeurs : le chemin (donc liste des sommets par lesquels on passe), et la puissance requise pour effectuer cela.
 
           """
-#encore en construction
+
 #fonction min_power de la séance 2 : min_power avec les arbres de kruskal
     def min_power_k(self,src,dest):
         if self.mst == None :
@@ -397,7 +397,7 @@ si même puissance entre deux camions mais différence de prix on supprime du fi
 
 """30 mars 2023 processing du catalogue de camions pour arriver à modéliser l'optimisation comme un problème du sac à dos
 """
-
+"""METHODE ET BROUILLON
 #pre-processing du catalogue trucks, pour enlever les binômes
 def catalogue_optimise(filename) : #fonction qui s'applique à un catalogue trucks.in
     liste_optimale=[] #initialisation (celle que l'on veut garder à la fin)
@@ -423,7 +423,7 @@ def catalogue_optimise(filename) : #fonction qui s'applique à un catalogue truc
         else : #elle a des doublons sur le pov du prix, donc on classe selon puissance pour garder la plus puissante
 
     return liste_optimisée #on récupère une liste sans doublons : pour un prix, on a gardé le camion le plus puissant, pour une puissance, le moins cher
-
+"""
 
 
 """ETAPE 1) si on a deux camions qui ont le même prix mais n'ont pas la même puissance, on supprime le plus faible
@@ -444,3 +444,106 @@ deux manière de résoudre :
 -> les solutions exactes : force brute, ou programme dynamique, mais assez lourd à réaliser.
 -> approximations : par exemple ordonner par valeur décroissante les trajets, et les additionner tant que cela respecte la contrainte.
 """
+
+
+def get_min_power():
+    raise NotImplementedError()
+    
+class Camion: #enregistre le format des données concernant les camions, tq dans le catalogue
+    def __init__(self, puissance, prix):
+        self.puissance = puissance
+        self.prix = prix
+
+    
+def truck_from_file(filename): #fonction qui s'applique aux fichiers de type trucks dans le dossier input du github
+    liste_camion = []   #initialisation d'une liste vide de camions
+    file = open(filename,"r")
+    i = True
+    for ligne in file:
+        if i:
+            i = False
+            continue
+        else:
+            ligne = ligne.split(" ")
+            camion = Camion(int(ligne[0]),int(ligne[1])) #modéliser chaque camion comme un couple de nombres (transtypage de ce qu'on lit dans le catalogue)
+            liste_camion.append(camion)     #ajoute ce camion à la liste initialisée au début de la fonction
+    return liste_camion     #retourne une liste de camions avec camion=(puissance,prix)
+
+
+def catalogue_optimise(liste_camion) : #fonction qui s'applique à une liste de camions
+    liste_optimale=[] #initialisation (celle que l'on veut garder à la fin)
+    #création de la liste OPTIMISEE
+    for camion in liste_camion: #optimisation de la puissance pour un même prix
+        b = True
+        puissance = camion.puissance
+        prix = camion.prix
+        for i in range(len(liste_optimale)): 
+            if liste_optimale[i].puissance <= puissance and liste_optimale[i].prix <= prix:
+                liste_optimale.pop(i)
+                liste_optimale.append(camion)
+                b = False
+                break
+            elif liste_optimale[i].puissance == puissance and liste_optimale[i].prix < prix:
+                b = False
+                break
+            else:
+                continue
+        if b:
+            liste_optimale.append(camion)
+            
+    liste_camion = liste_optimale.copy()
+    liste_optimale = []
+    
+    for camion in liste_camion:#optimisation du prix pour une même puissance
+        b = True
+        puissance = camion.puissance
+        prix = camion.prix
+        for i in range(len(liste_optimale)):
+            if liste_optimale[i].prix == prix and liste_optimale[i].puissance > puissance:
+                b = False
+                break
+            elif liste_optimale[i].prix >= prix and liste_optimale[i].puissance < puissance:
+                liste_optimale.pop(i)
+                liste_optimale.append(camion)
+                b = False
+                break
+            else:
+                continue
+        if b:
+            liste_optimale.append(camion)
+    
+    return liste_optimale
+
+def optimisation(liste_camion,budget,liste_trajet):
+    liste_profit = []
+    for s1,s2,profit in liste_trajet:
+        liste_profit.append([get_min_power(s1,s2),profit,[s1,s2]])
+    liste_camion = sorted(liste_camion,lambda camion : camion.puisssance)
+    #liste camion est telle que pour chaque puissance on a le prix minimal du camion qui la parcourt
+    profit_prix = []
+    #création d'une liste donnant le rapport maximum entre le profit et le prix pour chaque trajet
+    for power,profit,trajet in liste_profit:
+        for camion in liste_camion:
+            if camion.power > power:
+                profit_prix.append([profit/camion.prix,camion.prix,trajet,camion])
+                break
+            else:
+                continue
+    profit_prix = list(reversed(sorted(profit_prix)))
+    #tri de la liste par ordre décroissant
+    s = 0
+    affectation = []
+    #on complète affectation avec en priorité le meilleurs rapport profit/prix
+    #solution non optimale mais de complexité linéaire en la longueur de profit_prix
+    #complexité est O(C*T) avec C le nombre de Camion et T le nombre de Trajet
+    for _,prix,trajet,camion in profit_prix:
+        if s + prix < budget:
+            affectation.append([camion,trajet])
+            s += prix
+        else:
+            continue
+    return affectation
+
+
+
+
