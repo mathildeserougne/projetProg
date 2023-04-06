@@ -347,7 +347,7 @@ def kruskal(g):
 Question 15:
     
 min_power :
-    appelle kruskal qui a une complexité de O(Elog(E)) avec E le nombre d'arrête
+    appelle kruskal qui a une complexité de O(Elog(E)) avec E le nombre d'arêtes
     parcours en O(V^2) l'arbre de couverture minimal avec V le nombre de sommets
 la complexité est donc en O(Elog(E)+V¨2)
 """ 
