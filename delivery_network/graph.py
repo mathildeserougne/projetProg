@@ -440,7 +440,7 @@ ainsi on arrivera à trajet=(coût, profit)"""
 -> contrainte : le budget de l'entreprise
 -> fonction objectif : le profit (somme des profits de chaque trajet), que l'on veut maximiser
 
-deux manière de résoudre : 
+deux manières de résoudre : 
 -> les solutions exactes : force brute, ou programme dynamique, mais assez lourd à réaliser.
 -> approximations : par exemple ordonner par valeur décroissante les trajets, et les additionner tant que cela respecte la contrainte.
 """
